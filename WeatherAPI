@@ -1,0 +1,112 @@
+import requests
+import json
+
+def getWeatherAPI(api_key,city,outfile,units): #The function getWeatherAPI requires 3 arguments: the api key from OpenWeatherMap, the city that the user inputs, the name of the file where the weather information will be saved, and the units in which temperature information will be displayed
+    base_url = "http://api.openweathermap.org/data/2.5/weather"
+    parameters = {'q': city, 'appid' : api_key, 'units' : units}
+
+    response = requests.get(base_url,params = parameters) #A 'get' request is sent to the OpenWeatherMap API with the parameters listed
+    data = response.json() #The JSON response is then displayed as a Python dictionary
+    #print(data)
+    #print(response.status_code)
+
+    if 'weather' in data and 'main' in data: #Checks if the desired weather information is in the data
+        weather_description = data["weather"][0]['description']
+        temperature = data['main']['temp']
+        what_it_feels_like = data['main']['feels_like']
+        max_temperature = data['main']['temp_max']
+        min_temperature = data['main']['temp_min']
+        humidity = data['main']['humidity']
+        air_pressure = data['main']['pressure']
+        wind_speed = data['wind']['speed']
+        wind_direction = data['wind']['deg'] #Extracts relevant weather information from the JSON data
+
+        temperature_symbol = '°F' if units == 'imperial' else '°C' if units == 'metric' else 'K' #Sets the desired temperature symbol based on units
+
+        print(f"Weather description in {city}: {weather_description}") #Prints the weather information
+        print(f"Temperature: {temperature}{temperature_symbol}")
+        print(f"It feels like: {what_it_feels_like}{temperature_symbol}")
+        print(f"Highest Temperature: {max_temperature}{temperature_symbol}")
+        print(f"Lowest Temperature: {min_temperature}{temperature_symbol}")
+        print(f"Humidity: {humidity}")
+        print(f"Air Pressure: {air_pressure}")
+        print(f"Wind Speed: {wind_speed}")
+        print(f"Wind Direction: {wind_direction}°\n")
+        #print('\n')
+
+
+        with open(outfile,'a') as file: #Changes the weather information to the output file
+            file.write(f'Weather in {city}: {weather_description}')
+            file.write(f"Temperature: {temperature}{temperature_symbol}")
+            file.write(f"It feels like: {what_it_feels_like}{temperature_symbol}")
+            file.write(f"Highest Temperature: {max_temperature}{temperature_symbol}")
+            file.write(f"Lowest Temperature: {min_temperature}{temperature_symbol}")
+            file.write("Humidity: {humidity}")
+            file.write(f"Air Pressure: {air_pressure}")
+            file.write(f"Wind Speed: {wind_speed}")
+            file.write(f"Wind Direction: {wind_direction}°\n")
+            #file.write('\n')
+
+    else:
+        print(f"Weather information for {city} is unavilable") #If the specific weather information is unavailable in the data, then this statement will print out
+
+
+def getWeatherForecastAPI(api_key, city, units, num_days = 5):
+    base_url = "http://api.openweathermap.org/data/2.5/forecast"
+    parameters = {'q': city, 'appid': api_key, 'units': units}
+
+    response = requests.get(base_url, params=parameters)
+    data = response.json()
+
+    if 'list' in data: #Checks if the key 'list' is in the data.  The 'list' key is
+        forecast_data = data['list'] #If it is, it takes the forecasted data from the beginning to the end of the ending days number
+        daily_forecast = {}
+        for item in forecast_data:
+          date_time = item['dt_txt']
+          date = date_time.split(' ')[0] #Extracts the date
+          temperature = item['main']['temp']
+          weather_description = item['weather'][0]['description']
+
+          temperature_symbol = '°F' if units == 'imperial' else '°C' if units == 'metric' else 'K' #Sets the desired temperature symbol based on units
+
+          if date not in daily_forecast:
+           daily_forecast[date] = []
+          daily_forecast[date].append(f"{date_time}: {weather_description}, Temperature: {temperature}{temperature_symbol}")
+
+
+        for date, forecasts in daily_forecast.items(): #Takes the date keys and forecasts values from the daily_forecast dictionary
+          print(f"\nWeather Forecast for {date}: ")
+          for forecast in forecasts: #Traverses thorugh each forecasts value
+            print(forecast)
+
+def temperature_units(answer_for_units): #Function takes a user input for temperature units and returns the corresponding unit type.  Mostly created to check if the units are valid
+  if answer_for_units == 'imperial':
+    return 'imperial'
+  elif answer_for_units == 'metric':
+    return 'metric'
+  elif answer_for_units == 'standard':
+    return 'standard'
+  else:
+    return 'Unknown Unit'
+
+answer_for_units = input('Choose temperature units (Imperial/Farenheit, Metric/Celcius, Standard/Kelvin): ').lower() #Takes user input for temperature units and converts it to lowercase
+
+api_key = '71c08e36e7a3477c9bac5d89d55115f8' #OpenWeatherMap API key
+cities = [] #The cities that the user wants to know about are put into a list
+while True:
+    city = input('What city do you want to find the weather about? (Type "Exit" to finish): ')
+    #print(f'{city}')
+    if city.lower() == 'exit':
+        break
+    cities.append(city.strip()) #Takes user input for what cities they want to check the weather for.  Loop continues until user types exit
+
+units = temperature_units(answer_for_units) #Calls the temperature_units function to get the temperature units based on user input
+
+outfile = 'weather_output.txt' #Specifies the output file where the weather information will be saved
+
+for city in cities: #Iterates over the list of cities that the user wants to find weather information about by calling the function getWeatherAPI
+    print('\n')
+    getWeatherAPI(api_key, city, outfile, units)
+    print("\n Weather Forecast:")
+    getWeatherForecastAPI(api_key, city, units, num_days=5)
+    print('\n')
