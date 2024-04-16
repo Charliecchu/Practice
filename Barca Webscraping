@@ -1,0 +1,293 @@
+import requests
+from bs4 import BeautifulSoup
+import mysql.connector
+import pandas as pd
+import matplotlib.pyplot as plt
+
+url_1 = requests.get('https://fbref.com/en/squads/206d90db/Barcelona-Stats')
+url_2 = requests.get('https://fbref.com/en/squads/206d90db/2023-2024/matchlogs/all_comps/keeper/Barcelona-Match-Logs-All-Competitions')
+url_3 = requests.get('https://fbref.com/en/squads/206d90db/2023-2024/matchlogs/all_comps/possession/Barcelona-Match-Logs-All-Competitions')
+url_4 = requests.get('https://fbref.com/en/squads/206d90db/2023-2024/matchlogs/all_comps/passing_types/Barcelona-Match-Logs-All-Competitions')
+
+soup_1 = BeautifulSoup(url_1.text, 'html.parser')
+soup_2 = BeautifulSoup(url_2.text, 'html.parser')
+soup_3 = BeautifulSoup(url_3.text, 'html.parser')
+soup_4 = BeautifulSoup(url_4.text, 'html.parser')
+
+table_1 = soup_1.find('div', attrs = {'id' : 'div_stats_standard_12'}).find('table').find('tbody')
+table_2 = soup_2.find('div', attrs = {'id' : 'div_matchlogs_for'}).find('table').find('tbody')
+table_3 = soup_3.find('div', attrs = {'id' : 'div_matchlogs_for'}).find('table').find('tbody')
+table_4 = soup_4.find('div', attrs = {'id' : 'div_matchlogs_for'}).find('table').find('tbody')
+
+rows_1 = table_1.find_all('tr')
+for row in rows_1:
+    #print(row)
+    #print('-------------------------------------------')
+    name_column = row.find_all('th')
+    info_columns = row.find_all('td')
+    
+    if len(name_column) > 0 or len(info_columns) > 0:
+        name = name_column[0].find('a').text
+        matches_played = info_columns[3].text
+        starts = info_columns[4].text
+        minutes_played = info_columns[5].text
+        goals = info_columns[7].text
+        assists = info_columns[8].text
+        penalty_goals = info_columns[11].text
+        expected_goals = info_columns[15].text
+        progressive_carries = info_columns[19].text
+        progressive_passes = info_columns[20].text
+        progressive_passes_received = info_columns[21].text
+        
+        
+        
+        
+        
+    values = [name, matches_played, starts, minutes_played, goals, assists, penalty_goals]
+    #print(values)
+
+
+cnx = mysql.connector.connect(user = 'wsa', host = '34.68.250.121', database = 'Tutorials-Winter2024', password = 'LeBron>MJ!')
+cursor = cnx.cursor(buffered = True)
+
+
+seasons = ['2019-2020','2020-2021','2021-2022','2022-2023','2023-2024']
+for season in seasons:
+    url = requests.get(f'https://fbref.com/en/squads/206d90db/{season}/matchlogs/all_comps/keeper/Barcelona-Match-Logs-All-Competitions')
+    soup = BeautifulSoup(url.text, 'html.parser')
+    table = soup.find('div', attrs = {'id' : 'div_matchlogs_for'}).find('table').find('tbody')
+    rows = table.find_all('tr')
+    
+    for row in rows: 
+        columns = row.find_all('td')
+    
+        if len(columns) > 0:
+            opponents = columns[8].text
+            result = columns[5].text
+
+            shots_on_target_against = int(columns[9].text)
+            goals_conceded = int(columns[10].text)
+            saves = int(columns[11].text)
+            
+            save_percentage = columns[12].text
+            if save_percentage == '':
+                save_percentage = '0'
+            else:
+                save_percentage = columns[12].text + '%'
+            
+            post_shot_expected_goals = columns[14].text
+            if post_shot_expected_goals == '':
+                post_shot_expected_goals = 0.0
+            else:
+                post_shot_expected_goals = float(columns[14].text)
+            
+            post_shot_expected_goals_without_conceded_goals = columns[15].text
+
+            passes_launched = columns[20].text
+            if passes_launched == '':
+                passes_launched = 0
+            else:
+                passes_launched = int(columns[20].text)
+            
+            passes_attempted = columns[21].text
+            if passes_attempted == '':
+                passes_attempted = 0
+            else:
+                passes_attempted = int(columns[21].text)
+            
+            
+            pass_completion_percent = columns[22].text + '%'
+            
+            gk_passes_attempted_without_goal_kicks = columns[23].text
+            if gk_passes_attempted_without_goal_kicks == '':
+                gk_passes_attempted_without_goal_kicks = 0
+            else:
+                gk_passes_attempted_without_goal_kicks = int(columns[23].text)
+            
+            throws_attempted = columns[24].text
+            if throws_attempted == '':
+                throws_attempted = 0
+            else:
+                throws_attempted = int(columns[24].text)
+            
+            
+            launch_percentage = columns[25].text + '%'
+            
+            avg_length = columns[26].text
+            if avg_length == '':
+                avg_length = 0.0
+            else:
+                avg_length = float(columns[26].text)
+
+            crosses_faced = columns[27].text
+            if crosses_faced == '':
+                crosses_faced = 0
+            else:
+                crosses_faced = int(columns[27].text)
+            
+            
+            crosses_stopped = columns[28].text
+            if crosses_stopped == '':
+                crosses_stopped = 0.0
+            else:
+                crosses_stopped = float(columns[28].text)
+            
+            crosses_stopped_percent = columns[29].text + '%'
+            
+            def_actions_outside_pen_area = columns[30].text
+            avg_distance_of_def_actions = columns[31].text
+
+
+
+
+
+
+        info_1 = [season, opponents, result, shots_on_target_against, goals_conceded, saves, 
+                save_percentage, post_shot_expected_goals, post_shot_expected_goals_without_conceded_goals]
+
+        info_2 = [passes_launched, passes_attempted, pass_completion_percent, 
+                gk_passes_attempted_without_goal_kicks, throws_attempted,
+                 launch_percentage, avg_length]
+
+        info_3 = [crosses_faced, crosses_stopped, crosses_stopped_percent,
+                 def_actions_outside_pen_area, avg_distance_of_def_actions]
+        
+        values = [season, opponents, result, shots_on_target_against, goals_conceded, saves, save_percentage, post_shot_expected_goals, post_shot_expected_goals_without_conceded_goals, passes_launched, passes_attempted, pass_completion_percent, gk_passes_attempted_without_goal_kicks, throws_attempted, launch_percentage, avg_length, crosses_faced, crosses_stopped, crosses_stopped_percent, def_actions_outside_pen_area, avg_distance_of_def_actions]
+
+
+#         print(info_1)
+#         print(info_2)
+#         print(info_3)
+#         print('\n')
+        
+        
+        statement = "INSERT INTO Barca_Downfall_Goalkeeping_Gamelogs_charlie_chu (Season, Opponents, Result, Shots_on_target_against, Goals_conceded, Saves, Save_percentage, Post_shot_expected_goals, Post_shot_expected_goals_without_conceded_goals, Passes_launched, Passes_attempted, Pass_completion_percent, Gk_passes_attempted_without_goal_kicks, Throws_attempted,Launch_percentage, Avg_length, Crosses_faced, Crosses_stopped, Crosses_stopped_percent, Def_actions_outside_pen_area, Avg_distance_of_def_actions) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        
+#         cursor.execute(statement, values)
+#         cnx.commit()
+
+cnx = mysql.connector.connect(user = 'wsa', host = '34.68.250.121', database = 'Tutorials-Winter2024', password = 'LeBron>MJ!')
+cursor = cnx.cursor(buffered = True)
+
+seasons = ['2019-2020','2020-2021','2021-2022','2022-2023','2023-2024']
+for season in seasons:
+    url = requests.get(f'https://fbref.com/en/squads/206d90db/{season}/matchlogs/c12/possession/Barcelona-Match-Logs-La-Liga')
+    soup = BeautifulSoup(url.text, 'html.parser')
+    table = soup.find('div', attrs = {'id' : 'div_matchlogs_for'}).find('table').find('tbody')
+    rows = table.find_all('tr')
+    
+    
+    for row in rows: 
+        columns = row.find_all('td')
+
+        if len(columns) > 0:
+            opponents = columns[7].text
+            result = columns[4].text
+            possession_percentage = columns[8].text + '%'
+
+            touches = int(columns[9].text)
+            touches_in_def_pen_area = int(columns[10].text)
+            touches_in_def_3rd = int(columns[11].text)
+            touches_in_mid_3rd = int(columns[12].text)
+            touches_in_att_3rd = int(columns[13].text)
+            touches_in_att_pen_area = int(columns[14].text)
+            live_ball_touches = int(columns[15].text)
+
+            takeons_attempted = int(columns[16].text)
+            successful_takeons = int(columns[17].text)
+            successful_takeons_percent = columns[18].text + '%'
+            times_tackled_during_takeon = int(columns[19].text)
+            tackled_during_takeon_percent = columns[20].text + '%'
+
+            carries = int(columns[21].text)
+            total_carrying_distance = int(columns[22].text)
+            progressive_carrying_distance = int(columns[23].text)
+            progressive_carries = int(columns[24].text)
+            carries_into_final_3rd = int(columns[25].text)
+            carries_into_penalty_area = int(columns[26].text)
+            miscontrols = int(columns[27].text)
+            times_dispossessed = int(columns[28].text)
+            passes_received = int(columns[29].text)
+            progressive_passes_received = int(columns[30].text)
+
+
+        info_1 = [season, opponents, result, possession_percentage]
+        info_2 = [touches, touches_in_def_pen_area, touches_in_def_3rd,
+                 touches_in_mid_3rd, touches_in_att_3rd, touches_in_att_pen_area,
+                 live_ball_touches]
+        info_3 = [takeons_attempted, successful_takeons, successful_takeons_percent, 
+                 times_tackled_during_takeon, tackled_during_takeon_percent]
+        info_4 = [carries, total_carrying_distance, progressive_carrying_distance, 
+                 progressive_carries, carries_into_final_3rd, carries_into_penalty_area,
+                 miscontrols, times_dispossessed, passes_received, progressive_passes_received]
+        
+        values = [season, opponents, result, possession_percentage, touches, touches_in_def_pen_area, touches_in_def_3rd,touches_in_mid_3rd, touches_in_att_3rd, touches_in_att_pen_area, live_ball_touches, takeons_attempted, successful_takeons, successful_takeons_percent, times_tackled_during_takeon, tackled_during_takeon_percent, carries, total_carrying_distance, progressive_carrying_distance, progressive_carries, carries_into_final_3rd, carries_into_penalty_area, miscontrols, times_dispossessed, passes_received, progressive_passes_received]
+
+        print(info_1)
+        print(info_2)
+        print(info_3)
+        print(info_4)
+        print('\n')
+        
+        statement = "INSERT INTO Barca_Downfall_Possession_charlie_chu (season, opponents, result, possession_percentage, touches, touches_in_def_pen_area, touches_in_def_3rd,touches_in_mid_3rd, touches_in_att_3rd, touches_in_att_pen_area, live_ball_touches, takeons_attempted, successful_takeons, successful_takeons_percent, times_tackled_during_takeon, tackled_during_takeon_percent, carries, total_carrying_distance, progressive_carrying_distance, progressive_carries, carries_into_final_3rd, carries_into_penalty_area, miscontrols, times_dispossessed, passes_received, progressive_passes_received) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        
+#         cursor.execute(statement, values)
+#         cnx.commit()
+
+
+cnx = mysql.connector.connect(user = 'wsa', host = '34.68.250.121', database = 'Tutorials-Winter2024', password = 'LeBron>MJ!')
+cursor = cnx.cursor(buffered = True)
+
+
+seasons = ['2019-2020','2020-2021','2021-2022','2022-2023','2023-2024']
+for season in seasons:
+    url = requests.get(f'https://fbref.com/en/squads/206d90db/{season}/matchlogs/c12/passing_types/Barcelona-Match-Logs-La-Liga')
+    soup = BeautifulSoup(url.text, 'html.parser')
+    table = soup.find('div', attrs = {'id' : 'div_matchlogs_for'}).find('table').find('tbody')
+    rows = table.find_all('tr')
+    
+    for row in rows: 
+        columns = row.find_all('td')
+
+        if len(columns) > 0:
+            opponents = columns[7].text
+            result = columns[4].text
+            passes_attempted = int(columns[8].text)
+
+            live_ball_passes = int(columns[9].text)
+            dead_ball_passes = int(columns[10].text)
+            passes_from_free_kicks = int(columns[11].text)
+            through_balls = int(columns[12].text)
+            switches = int(columns[13].text)
+            crosses = int(columns[14].text)
+            thrown_ins_taken = int(columns[15].text)
+            corner_kicks = int(columns[16].text)
+
+            inswinging_corner_kicks = int(columns[17].text)
+            outswinging_corner_kicks = int(columns[18].text)
+            straight_corner_kicks = int(columns[19].text)
+            passes_completed = int(columns[20].text)
+            passes_offside = int(columns[21].text)
+            passes_blocked = int(columns[22].text)
+
+        info_1 = [season, opponents, result, passes_attempted]
+        
+        info_2 = [live_ball_passes, dead_ball_passes, passes_from_free_kicks,
+                 through_balls, switches, crosses, thrown_ins_taken, corner_kicks]
+        
+        info_3 = [inswinging_corner_kicks, outswinging_corner_kicks, 
+                  straight_corner_kicks, passes_completed, passes_offside, 
+                  passes_blocked]
+        
+        print(info_1)
+        print(info_2)
+        print(info_3)
+        print('\n')
+        
+        values = [season, opponents, result, passes_attempted, live_ball_passes, dead_ball_passes, passes_from_free_kicks,through_balls, switches, crosses, thrown_ins_taken, corner_kicks, inswinging_corner_kicks, outswinging_corner_kicks, straight_corner_kicks, passes_completed, passes_offside, passes_blocked]
+        
+        statement = "INSERT INTO Barca_Downfall_Pass_Types_charlie_chu (season, opponents, result, passes_attempted, live_ball_passes, dead_ball_passes, passes_from_free_kicks,through_balls, switches, crosses, thrown_ins_taken, corner_kicks, inswinging_corner_kicks, outswinging_corner_kicks, straight_corner_kicks, passes_completed, passes_offside, passes_blocked) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        
+        #cursor.execute(statement, values)
+        #cnx.commit()
+
