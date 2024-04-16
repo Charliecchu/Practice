@@ -1,0 +1,79 @@
+plt.clf()
+att_df = df[['passes attempted', 'throws attempted']]
+plt.boxplot(att_df, vert = False, labels = ['Passes Attempted', 'Throws Attempted'])
+plt.xlabel('Plays Attempted')
+plt.title('Side-by-Side Boxplot of Passes and Throws Attempted by Goalkeeper')
+plt.show()
+
+df = pd.read_csv("Barca_Downfall_Goalkeeping_Gamelogs_charlie_chu.csv")
+df
+
+df.rename(columns = {
+    'Shots_on_target_against' : 'Shots on Target Against',
+    'Goals_conceded' : 'Goals Conceded',
+    'Save_percentage' : 'Save Percentage',
+    'Post_shot_expected_goals' : 'Post Shot expected Goals',
+    'Post_shot_expected_goals_without_conceded_goal' : 'Post Shot Expected Goals Without Conceded Goal',
+    'Passes_launched' : 'Passes Launched',
+    'Passes_attempted' : 'Passes Attempted',
+    'Pass_completion_percent' : 'Pass Completion Percentage',
+    'Gk_passes_attempted_without_goal_kicks' : 'GK Passes Attempted(Non-Goalkicks)',
+    'Throws_attempted' : 'Throws Attempted',
+    'Launch_percentage' : 'Launch Percentage',
+    'Avg_length' : 'Average Length',
+    'Crosses_faced' : 'Crosses Faced',
+    'Crosses_stopped' : 'Crosses Stopped',
+    'Crosses_stopped_percent' : 'Crosses Stopped Percentage',
+    'Def_actions_outside_pen_area' : 'Defensive Actions Outside Penalty Area',
+    'Avg_distance_of_def_actions' : 'Average Distance of Defensive Actions'
+    
+    
+}, inplace = True)
+df.columns = [col.lower() for col in df]
+df.columns
+
+plt.clf()
+groups = df.groupby('result')
+for result, group in groups:
+    plt.scatter(group['saves'], group['goals conceded'], label = result)
+plt.legend()
+plt.title("Saves and Goals Conceded by Game Result")
+plt.show()
+
+plt.clf() 
+plt.scatter(df['saves'], df['shots on target against'])
+plt.xlabel('Saves')
+plt.ylabel('Shots on Target Against')
+plt.title('Saves and Shots on Target Against Scatterplot')
+plt.show()
+
+plt.clf()
+avg_saves = df.groupby('season')['saves'].mean()
+avg_saves.plot(kind = 'bar')
+plt.ylabel('Saves')
+plt.xlabel('Season')
+plt.title('Barca Average Saves per Season')
+plt.show()
+
+plt.clf()
+avg_saves = df.groupby('season')['goals conceded'].mean()
+avg_saves.plot(kind = 'bar')
+plt.ylabel('goals conceded')
+plt.xlabel('Season')
+plt.title('Barca Average Goals Conceded without Conceding per Season')
+plt.show()
+
+plt.clf()
+avg_saves = df.groupby('season')['crosses stopped'].mean()
+avg_saves.plot(kind = 'bar')
+plt.ylabel('Crosses Stopped')
+plt.xlabel('Season')
+plt.title('Barca Average Crosses Stopped per Season')
+plt.show()
+
+plt.clf()
+att_df = df[['passes attempted', 'throws attempted']]
+plt.boxplot(att_df, vert = False, labels = ['Passes Attempted', 'Throws Attempted'])
+plt.xlabel('Plays Attempted')
+plt.title('Side-by-Side Boxplot of Passes and Throws Attempted by Goalkeeper')
+plt.show()
